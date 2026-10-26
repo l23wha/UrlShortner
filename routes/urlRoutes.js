@@ -24,8 +24,8 @@ router.post('/create',async(req,res)=>{
              message:"Short Url created successfully",
              shortId,
              shortUrl:`http://localhost:3000/${shortId}`,
-             createdAt:createdAt,
-             updatedAt:updatedAt
+             createdAt:newUrl.createdAt,
+             updatedAt:newUrl.updatedAt
         });
     }catch(error){
          console.error(error);
@@ -89,9 +89,62 @@ router.put('/shorten/:shortId',async (req,res)=>{
              shortCode:urlRecord.shortId,
              createdAt:urlRecord.createdAt,
              updatedAt:urlRecord.updatedAt
-           })
+           });
      }catch(error){
           console.error("Error :",error.message);
           return res.status(500).json({message:"Internal Server error"});
      }
+});
+
+
+//Delete short url
+
+router.delete('/shorten/:shortId',async (req,res)=>{
+      try{
+          const {shortId}=req.params;
+
+          if(!shortId){
+             return res.status(400).json({message:"ShortId or ShortCode is required to delete"});
+          }
+
+          const urlRecord=await Url.findOneAndDelete({shortId});
+           if(!urlRecord){
+             return res.status(404).json({message:"No record found with this shortId"});
+           }
+
+           return res.status(204).json({message:"Deleted Successfully"});
+      }catch(error){
+         console.error(error);
+          return res.status(500).json({message:"Internal Server error"});
+      }
+});
+
+router.get('/shorten/:shortId/stats',async (req,res)=>{
+      try{
+          const {shortId}=req.params;
+           
+          if(!shortId){
+             return res.status(400).json({message:"Short ID is required"});
+
+          }
+
+          const urlRecord=await Url.findOne({shortId});
+          if(!urlRecord){
+             return res.status(404).json({message:"Short url not found"});
+          }
+
+          return res.status(200).json({
+             shortCode:urlRecord.shortId,
+             originalUrl:urlRecord.redirectURL,
+             accessCount:urlRecord.accessCount,
+             createdAt:urlRecord.createdAt,
+             updatedAt:urlRecord.updatedAt
+          });
+         
+      }catch(error){
+         console.log(error);
+          return res.status(500).json({message:"Internal server error"});
+      }
 })
+
+module.exports=router;
